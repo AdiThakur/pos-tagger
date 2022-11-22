@@ -2,7 +2,7 @@ import unittest
 from tagger import *
 
 
-class TestCountTransition(unittest.TestCase):
+class TestCountFrequency(unittest.TestCase):
     def test_basic(self):
         transitions = [
             ("ONE", "ONE"),
@@ -18,7 +18,7 @@ class TestCountTransition(unittest.TestCase):
 
         trans_freq_matrix: FreqMatrix = {}
         for tag1, tag2 in transitions:
-            count_transition(trans_freq_matrix, tag1, tag2)
+            count_frequency(trans_freq_matrix, tag1, tag2)
 
         self.assertEqual(3, trans_freq_matrix["ONE"].frequencies["ONE"])
         self.assertEqual(1, trans_freq_matrix["ONE"].frequencies["TWO"])

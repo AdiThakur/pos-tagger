@@ -31,13 +31,16 @@ def parse_line(line: List[str]) -> Tuple[str, str]:
     return word, tag
 
 
-def count_transition(trans_freq_matrix: FreqMatrix, tag1: str, tag2: str) -> None:
-    if tag1 not in trans_freq_matrix:
-        trans_freq_matrix[tag1] = Frequency(tag1)
-    trans_freq_matrix[tag1].record(tag2)
+def count_frequency(matrix: FreqMatrix, str1: str, str2: str) -> None:
+    if str1 not in matrix:
+        matrix[str1] = Frequency(str1)
+    matrix[str1].record(str2)
 
 
-def train_from_file(trans_freq_matrix: FreqMatrix, training_file: str) -> None:
+def train_from_file(
+    training_file: str,
+    trans_freq_matrix: FreqMatrix,
+    emiss_freq_matrix: FreqMatrix) -> None:
 
     with open(training_file) as file:
 
@@ -52,7 +55,8 @@ def train_from_file(trans_freq_matrix: FreqMatrix, training_file: str) -> None:
             word1, tag1 = parse_line(line1)
             word2, tag2 = parse_line(line2)
 
-            count_transition(trans_freq_matrix, tag1, tag2)
+            count_frequency(trans_freq_matrix, tag1, tag2)
+            count_frequency(emiss_freq_matrix, tag1, word1)
 
             line1 = line2
             line2 = file.readline()
@@ -61,12 +65,19 @@ def train_from_file(trans_freq_matrix: FreqMatrix, training_file: str) -> None:
 def train_from_files(training_files: List[str]) -> None:
 
     trans_freq_matrix: FreqMatrix = {}
+    emiss_freq_matrix: FreqMatrix = {}
 
     for training_file in training_files:
-        train_from_file(trans_freq_matrix, training_file)
+        train_from_file(
+            training_file,
+            trans_freq_matrix,
+            emiss_freq_matrix
+        )
 
     for tag in trans_freq_matrix:
         print(trans_freq_matrix[tag])
+    for word in emiss_freq_matrix:
+        print(emiss_freq_matrix[word])
 
 
 def tag(training_files: List[str], test_file: str, output_file: str) -> None:
