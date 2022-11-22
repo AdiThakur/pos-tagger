@@ -29,8 +29,7 @@ class Trainer:
         self._initial_freq: Dict[str, int] = {}
         self._transition_freq: FreqDict = {}
         self._emission_freq: FreqDict = {}
-        # TODO: Assuming that every sentence has closing punctuation
-        self._lines: int = 1
+        self._lines: int = 0
 
     def train(self) -> Tuple[int, Dict[str, int], FreqDict, FreqDict]:
 
@@ -42,20 +41,24 @@ class Trainer:
                 line2 = f.readline()
 
                 while True:
-                    if not (line1 and line2):
+                    if not line2:
                         break
 
-                    is_start = self.count(line1, line2, is_start)
+                    is_start = self._count(line1, line2, is_start)
 
                     line1 = line2
                     line2 = f.readline()
+
+                last_word, _ = self._parse_line(line1)
+                if last_word == '"':
+                    self._lines += 1
 
         return (
             self._lines, self._initial_freq,
             self. _transition_freq, self._emission_freq
         )
 
-    def count(self, line1: str, line2: str, is_start: bool) -> bool:
+    def _count(self, line1: str, line2: str, is_start: bool) -> bool:
 
         word1, tag1 = self._parse_line(line1)
         word2, tag2 = self._parse_line(line2)
@@ -63,7 +66,7 @@ class Trainer:
         self._count_transition(tag1, tag2)
         self._count_emission(tag1, word1)
 
-        if is_start:
+        if is_start and word1 != '"':
             self._count_initial(tag1)
             is_start = False
 
