@@ -11,3 +11,5 @@ plate : NN1
 before : PRP
 him : PNP
 . : PUN
+PK : NP0
+. : PUN

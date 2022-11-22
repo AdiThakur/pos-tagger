@@ -16,7 +16,7 @@ class TestCountFrequency(unittest.TestCase):
             ("FOUR-FIVE", "ONE"),
         ]
 
-        trans_freq_matrix: FreqMatrix = {}
+        trans_freq_matrix: FreqDict = {}
         for tag1, tag2 in transitions:
             count_frequency(trans_freq_matrix, tag1, tag2)
 

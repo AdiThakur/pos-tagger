@@ -2,10 +2,11 @@ import sys
 from typing import *
 
 
-FreqMatrix = Dict[str, 'Frequency']
+FreqDict = Dict[str, 'Frequency']
 
 
 class Frequency:
+
     for_str: str
     count: int
     frequencies: Dict[str, int]
@@ -25,63 +26,83 @@ class Frequency:
         return f"{self.for_str}({self.count}) -> {self.frequencies.__repr__()}"
 
 
-def parse_line(line: List[str]) -> Tuple[str, str]:
-    line = line.split(":")
-    word, tag = line[0].strip(), line[1].strip()
-    return word, tag
+class Trainer:
 
+    _files: List[str]
+    _initial_freq: Dict[str, int]
+    _transition_freq: FreqDict
+    _emission_freq: FreqDict
 
-def count_frequency(matrix: FreqMatrix, str1: str, str2: str) -> None:
-    if str1 not in matrix:
-        matrix[str1] = Frequency(str1)
-    matrix[str1].record(str2)
+    def __init__(self, training_files: List[str]) -> None:
+        self._files = training_files
+        self._initial_freq = {}
+        self._transition_freq = {}
+        self._emission_freq = {}
 
+    def train(self) -> Tuple[Dict[str, int], FreqDict, FreqDict]:
 
-def train_from_file(
-    training_file: str,
-    trans_freq_matrix: FreqMatrix,
-    emiss_freq_matrix: FreqMatrix) -> None:
+        for file in self._files:
+            with open(file) as f:
 
-    with open(training_file) as file:
+                is_start = True
+                line1 = f.readline()
+                line2 = f.readline()
 
-        is_start = True
-        line1 = file.readline()
-        line2 = file.readline()
+                while True:
+                    if not (line1 and line2):
+                        break
 
-        while True:
-            if not (line1 and line2):
-                break
+                    is_start = self.count(line1, line2, is_start)
 
-            word1, tag1 = parse_line(line1)
-            word2, tag2 = parse_line(line2)
+                    line1 = line2
+                    line2 = f.readline()
 
-            count_frequency(trans_freq_matrix, tag1, tag2)
-            count_frequency(emiss_freq_matrix, tag1, word1)
+        return self._initial_freq, self. _transition_freq, self._emission_freq
 
-            line1 = line2
-            line2 = file.readline()
+    def count(self, line1: str, line2: str, is_start: bool) -> bool:
 
+        word1, tag1 = self._parse_line(line1)
+        word2, tag2 = self._parse_line(line2)
 
-def train_from_files(training_files: List[str]) -> None:
+        self._count_transition(tag1, tag2)
+        self._count_emission(word1, tag1)
 
-    trans_freq_matrix: FreqMatrix = {}
-    emiss_freq_matrix: FreqMatrix = {}
+        if is_start:
+            self._count_initial(tag1)
+            is_start = False
 
-    for training_file in training_files:
-        train_from_file(
-            training_file,
-            trans_freq_matrix,
-            emiss_freq_matrix
-        )
+        # TODO: Account for complex sentence ends, such as "blah"? or "blah?"
+        if word1 in [".", "!", "?"]:
+            is_start = True
 
-    for tag in trans_freq_matrix:
-        print(trans_freq_matrix[tag])
-    for word in emiss_freq_matrix:
-        print(emiss_freq_matrix[word])
+        return is_start
+
+    def _parse_line(self, line: List[str]) -> Tuple[str, str]:
+        line = line.split(":")
+        word, tag = line[0].strip(), line[1].strip()
+        return word, tag
+
+    def _count_transition(self, tag1: str, tag2: str) -> None:
+        if tag1 not in self._transition_freq:
+            self._transition_freq[tag1] = Frequency(tag1)
+        self._transition_freq[tag1].record(tag2)
+
+    def _count_emission(self, tag: str, word: str) -> None:
+        if tag not in self._emission_freq:
+            self._emission_freq[tag] = Frequency(tag)
+        self._emission_freq[tag].record(word)
+
+    def _count_initial(self, tag: str) -> None:
+        # TODO: Need to count the number of lines somewhere
+        if tag not in self._initial_freq:
+            self._initial_freq[tag] = 0
+        self._initial_freq[tag] += 1
 
 
 def tag(training_files: List[str], test_file: str, output_file: str) -> None:
-    train_from_files(training_files)
+    trainer = Trainer(training_files)
+    initial_freq, transition_freq, emissions_freq = trainer.train()
+    print(initial_freq)
 
 
 if __name__ == '__main__':
