@@ -7,14 +7,10 @@ FreqDict = Dict[str, 'Frequency']
 
 class Frequency:
 
-    for_str: str
-    count: int
-    frequencies: Dict[str, int]
-
     def __init__(self, for_str: str) -> None:
-        self.for_str = for_str
-        self.count = 0
-        self.frequencies = {}
+        self.for_str: str = for_str
+        self.count: int = 0
+        self.frequencies: Dict[str, int] = {}
 
     def record(self, other_str: str) -> None:
         if other_str not in self.frequencies:
@@ -28,18 +24,15 @@ class Frequency:
 
 class Trainer:
 
-    _files: List[str]
-    _initial_freq: Dict[str, int]
-    _transition_freq: FreqDict
-    _emission_freq: FreqDict
-
     def __init__(self, training_files: List[str]) -> None:
-        self._files = training_files
-        self._initial_freq = {}
-        self._transition_freq = {}
-        self._emission_freq = {}
+        self._files: List[str] = training_files
+        self._initial_freq: Dict[str, int] = {}
+        self._transition_freq: FreqDict = {}
+        self._emission_freq: FreqDict = {}
+        # TODO: Assuming that every sentence has closing punctuation
+        self._lines: int = 1
 
-    def train(self) -> Tuple[Dict[str, int], FreqDict, FreqDict]:
+    def train(self) -> Tuple[int, Dict[str, int], FreqDict, FreqDict]:
 
         for file in self._files:
             with open(file) as f:
@@ -57,7 +50,10 @@ class Trainer:
                     line1 = line2
                     line2 = f.readline()
 
-        return self._initial_freq, self. _transition_freq, self._emission_freq
+        return (
+            self._lines, self._initial_freq,
+            self. _transition_freq, self._emission_freq
+        )
 
     def count(self, line1: str, line2: str, is_start: bool) -> bool:
 
@@ -65,15 +61,16 @@ class Trainer:
         word2, tag2 = self._parse_line(line2)
 
         self._count_transition(tag1, tag2)
-        self._count_emission(word1, tag1)
+        self._count_emission(tag1, word1)
 
         if is_start:
             self._count_initial(tag1)
             is_start = False
 
         # TODO: Account for complex sentence ends, such as "blah"? or "blah?"
-        if word1 in [".", "!", "?"]:
+        if self._is_sentence_end(word1, word2):
             is_start = True
+            self._lines += 1
 
         return is_start
 
@@ -98,12 +95,15 @@ class Trainer:
             self._initial_freq[tag] = 0
         self._initial_freq[tag] += 1
 
+    def _is_sentence_end(self, word1: str, word2: str) -> bool:
+        return word1 in [".", "!", "?"]
+
 
 def tag(training_files: List[str], test_file: str, output_file: str) -> None:
     trainer = Trainer(training_files)
-    initial_freq, transition_freq, emissions_freq = trainer.train()
-    print(initial_freq)
-
+    num_lines, initial_freq, transition_freq, emissions_freq = trainer.train()
+    print(emissions_freq)
+    print(num_lines)
 
 if __name__ == '__main__':
     # Tagger expects the input call: "python3 tagger.py -d <training files> -t <test file> -o <output file>"
