@@ -1,0 +1,13 @@
+Detective : NP0
+Chief : NP0
+Inspector : NP0
+John : NP0
+McLeish : NP0
+gazed : VVD
+doubtfully : AV0
+at : PRP
+the : AT0
+plate : NN1
+before : PRP
+him : PNP
+. : PUN
