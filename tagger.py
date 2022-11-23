@@ -22,16 +22,16 @@ class Frequency:
         return f"{self.for_str}({self.count}) -> {self.frequencies.__repr__()}"
 
 
-class Trainer:
+class Counter:
 
     def __init__(self, training_files: List[str]) -> None:
         self._files: List[str] = training_files
         self._initial_freq: Dict[str, int] = {}
         self._transition_freq: FreqDict = {}
         self._emission_freq: FreqDict = {}
-        self._lines: int = 0
+        self._sentences: int = 0
 
-    def train(self) -> Tuple[int, Dict[str, int], FreqDict, FreqDict]:
+    def count(self) -> Tuple[int, Dict[str, int], FreqDict, FreqDict]:
 
         for file in self._files:
             with open(file) as f:
@@ -55,8 +55,8 @@ class Trainer:
                         line2 = next_line
 
         return (
-            self._lines, self._initial_freq,
-            self. _transition_freq, self._emission_freq
+            self._sentences, self._initial_freq, self. _transition_freq,
+            self._emission_freq
         )
 
     def _count(
@@ -77,7 +77,7 @@ class Trainer:
 
         if self._is_sentence_end(word1):
             is_start = True
-            self._lines += 1
+            self._sentences += 1
 
         return is_start
 
@@ -97,20 +97,33 @@ class Trainer:
         self._emission_freq[tag].record(word)
 
     def _count_initial(self, tag: str) -> None:
-        # TODO: Need to count the number of lines somewhere
         if tag not in self._initial_freq:
             self._initial_freq[tag] = 0
         self._initial_freq[tag] += 1
 
-    def _is_sentence_end(self, word1: str, word2: str) -> bool:
+    def _is_sentence_end(self, word1: str) -> bool:
         return word1 in [".", "!", "?"]
 
 
-def tag(training_files: List[str], test_file: str, output_file: str) -> None:
-    trainer = Trainer(training_files)
-    num_lines, initial_freq, transition_freq, emissions_freq = trainer.train()
-    print(emissions_freq)
-    print(num_lines)
+def tag() -> None:
+    pass
+
+
+def main(training_files: List[str], test_file: str, output_file: str) -> None:
+    counter = Counter(training_files)
+    num_sentences, initial_freq, transition_freq, emission_freq = counter.count()
+
+    # TODO: For debugging; remove this shit boi
+    print(num_sentences)
+    print("Initial")
+    print(initial_freq)
+    print("Transition")
+    for key in transition_freq:
+        print("\t" + transition_freq[key].__str__())
+    print("Emission")
+    for key in emission_freq:
+        print("\t" + emission_freq[key].__str__())
+
 
 if __name__ == '__main__':
     # Tagger expects the input call: "python3 tagger.py -d <training files> -t <test file> -o <output file>"
@@ -118,9 +131,9 @@ if __name__ == '__main__':
     training_list = parameters[parameters.index("-d") + 1 : parameters.index("-t")]
     test_file = parameters[parameters.index("-t") + 1]
     output_file = parameters[parameters.index("-o") + 1]
-    # print("Training files: " + str(training_list))
-    # print("Test file: " + test_file)
-    # print("Output file: " + output_file)
-
-    # Start the training and tagging operation.
-    tag(training_list, test_file, output_file)
+    main(training_list, test_file, output_file)
+    # main(
+    #     ['data/training0.txt'],
+    #     'data/test1.txt',
+    #     'out.txt'
+    # )

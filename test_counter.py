@@ -28,7 +28,7 @@ def tagify(sentence: str) -> List[str]:
 class TestCount(unittest.TestCase):
     def test_no_quotes_returns_correct_num_lines(self):
         # Arrange
-        trainer = Trainer([])
+        trainer = Counter([])
         training_data = tagify("Yo Chief ! It is me . Sup ?")
         line_windows = generate_windows(training_data)
         is_start = True
@@ -38,11 +38,11 @@ class TestCount(unittest.TestCase):
             is_start = trainer._count(line1, line2, is_start)
 
         # Assert
-        self.assertEqual(2, trainer._lines)
+        self.assertEqual(2, trainer._sentences)
 
     def test_quote_at_end_returns_correct_num_lines(self):
         # Arrange
-        trainer = Trainer([])
+        trainer = Counter([])
         training_data = tagify(
             ' Remember the golden rule of life . " Jaldi ka kaam shatan ka hota hai . "'
         )
@@ -54,7 +54,7 @@ class TestCount(unittest.TestCase):
             is_start = trainer._count(line1, line2, is_start)
 
         # Assert
-        self.assertEqual(2, trainer._lines)
+        self.assertEqual(2, trainer._sentences)
 
 
 if __name__ == "__main__":
