@@ -126,13 +126,13 @@ def viterbi(
     for tag in tags:
 
         if tag not in initial_freq:
-            prob = 0
+            curr_prob = 0
         else:
             init_prob = (initial_freq[tag] / num_sentences)
             emission_prob = emission_freq[tag].get_prob_of(sentence[0])
-            prob = init_prob * emission_prob
+            curr_prob = init_prob * emission_prob
 
-        prob[0].update({ tag: prob })
+        prob[0].update({ tag: curr_prob })
         prev[0][tag] = None
 
     for t in range(1, len(sentence)):
@@ -161,7 +161,7 @@ def follow_path(
     prob: List[Dict[str, int]], prev: List[Dict[str, str]]) -> List[str]:
 
     # Determine highest prob last state
-    max_prob_tag = prev[-1].keys()[0]
+    max_prob_tag = list(prev[-1].keys())[0]
     max_prob = prob[-1][max_prob_tag]
 
     for tag in prev[-1]:
@@ -175,7 +175,7 @@ def follow_path(
     most_likely_tags = [max_prob_tag]
 
     for t in range(len(prob) - 1, 0, -1):
-        most_likely_tags.insert(prev[t][tag], 0)
+        most_likely_tags.insert(0, prev[t][tag])
         tag = prev[t][tag]
 
     return most_likely_tags
@@ -273,3 +273,9 @@ if __name__ == '__main__':
     #     'data/test1.txt',
     #     'out.txt'
     # )
+
+# Possible speedups?
+# 1. Pre-compute all transition and emission probabilities; instead of computing
+#    them every time, we can just do a simple lookup
+# 2. In follow path, either use two stacks, or create a fixed size list and index
+#    into it rather than constantly insert to the front
