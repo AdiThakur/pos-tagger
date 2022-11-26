@@ -118,14 +118,15 @@ def viterbi(
     num_sentences: int,
     initial_prob_matrix: List[float],
     transition_prob_matrix: List[List[float]],
-    emission_prob_matrix: List[Dict[str, float]]) -> List[Dict[str, str]]:
+    emission_prob_matrix: List[Dict[str, float]]) -> Tuple[List[List[int]], List[List[int]]]:
 
     num_tags = len(tags)
-    prob: List[Dict[str, int]] = []
-    prev: List[Dict[str, str]] = []
+    prob: List[List[int]] = []
+    prev: List[List[int]] = []
+
     for i in range(len(sentence)):
-        prob.append({})
-        prev.append({})
+        prob.append([0] * num_tags)
+        prev.append([-1] * num_tags)
 
     initial_prob_sum = 0
 
@@ -137,12 +138,11 @@ def viterbi(
         curr_prob = initial_prob_matrix[i] * emission_prob
         initial_prob_sum += curr_prob
 
-        prob[0].update({tags[i]: curr_prob})
-        prev[0][tags[i]] = None
+        prob[0][i] = curr_prob
 
-    for tag in tags:
+    for i in range(num_tags):
         if initial_prob_sum > 0:
-            prob[0][tag] = (prob[0][tag] / initial_prob_sum)
+            prob[0][i] = (prob[0][i] / initial_prob_sum)
 
     for t in range(1, len(sentence)):
 
@@ -152,7 +152,7 @@ def viterbi(
 
             tag = tags[i1]
             max_prob = 0
-            max_prev_tag = tag
+            max_prev_tag_index = i1
 
             if sentence[t] in emission_prob_matrix[i1]:
                 emission_prob = emission_prob_matrix[i1][sentence[t]]
@@ -162,45 +162,45 @@ def viterbi(
             for i2 in range(num_tags):
 
                 prev_tag = tags[i2]
-                prev_prob = prob[t - 1][prev_tag]
+                prev_prob = prob[t - 1][i2]
 
                 curr_prob = prev_prob * transition_prob_matrix[i2][i1] * emission_prob
 
                 if curr_prob >= max_prob:
                     max_prob = curr_prob
-                    max_prev_tag = prev_tag
+                    max_prev_tag_index = i2
 
-            prob[t][tag] = max_prob
-            prev[t][tag] = max_prev_tag
+            prob[t][i1] = max_prob
+            prev[t][i1] = max_prev_tag_index
             max_prob_sum += max_prob
 
-        for tag in tags:
+        for i in range(num_tags):
             if max_prob_sum > 0:
-                prob[t][tag] = (prob[t][tag] / max_prob_sum)
+                prob[t][i] = (prob[t][i] / max_prob_sum)
 
     return prob, prev
 
 
 def follow_path(
-    prob: List[Dict[str, int]], prev: List[Dict[str, str]]) -> List[str]:
+    tags: List[str], prob: List[List[int]], prev: List[List[int]]) -> List[str]:
 
     # Determine highest prob last state
-    max_prob_tag = list(prev[-1].keys())[0]
-    max_prob = prob[-1][max_prob_tag]
+    max_prob_tag_index = 0
+    max_prob = prob[-1][0]
 
-    for tag in prev[-1]:
-        curr_prob = prob[-1][tag]
+    for i in range(len(prev[-1])):
+        curr_prob = prob[-1][i]
         if curr_prob >= max_prob:
             max_prob = curr_prob
-            max_prob_tag = tag
+            max_prob_tag_index = i
 
     # Follow most-likely states back to first
-    tag = max_prob_tag
-    most_likely_tags = [max_prob_tag]
+    tag_index = max_prob_tag_index
+    most_likely_tags = []
 
-    for t in range(len(prob) - 1, 0, -1):
-        most_likely_tags.insert(0, prev[t][tag])
-        tag = prev[t][tag]
+    for t in range(len(prob) - 1, -1, -1):
+        most_likely_tags.insert(0, tags[tag_index])
+        tag_index = prev[t][tag_index]
 
     return most_likely_tags
 
@@ -281,7 +281,7 @@ def tag(
             )
 
             # Follow path to get most likely tags
-            most_likely_tags = follow_path(prob, prev)
+            most_likely_tags = follow_path(tags, prob, prev)
 
             # Write output
             tagged_words = tagify(curr_sentence, most_likely_tags)
