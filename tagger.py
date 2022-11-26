@@ -120,22 +120,34 @@ def viterbi(
     emission_freq: FreqDict) -> List[Dict[str, str]]:
 
     tags = emission_freq.keys()
-    prob: List[Dict[str, int]] = [{}] * len(sentence)
-    prev: List[Dict[str, str]] = [{}] * len(sentence)
+    prob: List[Dict[str, int]] = []
+    prev: List[Dict[str, str]] = []
+    for i in range(len(sentence)):
+        prob.append({})
+        prev.append({})
+
+    initial_prob_sum = 0
 
     for tag in tags:
-
         if tag not in initial_freq:
             curr_prob = 0
         else:
             init_prob = (initial_freq[tag] / num_sentences)
             emission_prob = emission_freq[tag].get_prob_of(sentence[0])
             curr_prob = init_prob * emission_prob
+            initial_prob_sum += curr_prob
 
         prob[0].update({ tag: curr_prob })
         prev[0][tag] = None
 
+    for tag in tags:
+        if initial_prob_sum > 0:
+            prob[0][tag] = (prob[0][tag] / initial_prob_sum)
+
     for t in range(1, len(sentence)):
+
+        max_prob_sum = 0
+
         for tag in tags:
 
             max_prob = 0
@@ -144,7 +156,7 @@ def viterbi(
             for prev_tag in tags:
                 prev_prob = prob[t - 1][prev_tag]
                 transition_prob = transition_freq[prev_tag].get_prob_of(tag)
-                emission_prob = emission_freq[tag].get_prob_of(tag)
+                emission_prob = emission_freq[tag].get_prob_of(sentence[t])
                 curr_prob =  prev_prob * transition_prob * emission_prob
 
                 if curr_prob >= max_prob:
@@ -153,6 +165,11 @@ def viterbi(
 
             prob[t][tag] = max_prob
             prev[t][tag] = max_prev_tag
+            max_prob_sum += max_prob
+
+        for tag in tags:
+            if max_prob_sum > 0:
+                prob[t][tag] = (prob[t][tag] / max_prob_sum)
 
     return prob, prev
 
