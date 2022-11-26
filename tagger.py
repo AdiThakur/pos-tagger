@@ -137,7 +137,7 @@ def viterbi(
             curr_prob = init_prob * emission_prob
             initial_prob_sum += curr_prob
 
-        prob[0].update({ tag: curr_prob })
+        prob[0].update({tag: curr_prob})
         prev[0][tag] = None
 
     for tag in tags:
@@ -157,7 +157,7 @@ def viterbi(
                 prev_prob = prob[t - 1][prev_tag]
                 transition_prob = transition_freq[prev_tag].get_prob_of(tag)
                 emission_prob = emission_freq[tag].get_prob_of(sentence[t])
-                curr_prob =  prev_prob * transition_prob * emission_prob
+                curr_prob = prev_prob * transition_prob * emission_prob
 
                 if curr_prob >= max_prob:
                     max_prob = curr_prob
@@ -266,17 +266,6 @@ def main(training_files: List[str], test_filename: str, output_filename: str) ->
         emission_freq
     )
 
-    # TODO: For debugging; remove this shit boi
-    # print(num_sentences)
-    # print("Initial")
-    # print(initial_freq)
-    # print("Transition")
-    # for key in transition_freq:
-    #     print("\t" + transition_freq[key].__str__())
-    # print("Emission")
-    # for key in emission_freq:
-    #     print("\t" + emission_freq[key].__str__())
-
 
 if __name__ == '__main__':
     # Tagger expects the input call: "python3 tagger.py -d <training files> -t <test file> -o <output file>"
@@ -285,11 +274,7 @@ if __name__ == '__main__':
     test_file = parameters[parameters.index("-t") + 1]
     output_file = parameters[parameters.index("-o") + 1]
     main(training_list, test_file, output_file)
-    # main(
-    #     ['data/training0.txt'],
-    #     'data/test1.txt',
-    #     'out.txt'
-    # )
+
 
 # Possible speedups?
 # 1. Pre-compute all transition and emission probabilities; instead of computing
