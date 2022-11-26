@@ -2,3 +2,4 @@ __pycache__
 .idea
 out*.txt
 results.txt
+*.lprof

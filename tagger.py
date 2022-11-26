@@ -114,12 +114,13 @@ class Counter:
 
 def viterbi(
     sentence: List[str],
+    tags: List[str],
     num_sentences: int,
-    initial_freq: Dict[str, int],
-    transition_freq: FreqDict,
-    emission_freq: FreqDict) -> List[Dict[str, str]]:
+    initial_prob_matrix: List[float],
+    transition_prob_matrix: List[List[float]],
+    emission_prob_matrix: List[Dict[str, float]]) -> List[Dict[str, str]]:
 
-    tags = emission_freq.keys()
+    num_tags = len(tags)
     prob: List[Dict[str, int]] = []
     prev: List[Dict[str, str]] = []
     for i in range(len(sentence)):
@@ -128,17 +129,16 @@ def viterbi(
 
     initial_prob_sum = 0
 
-    for tag in tags:
-        if tag not in initial_freq:
-            curr_prob = 0
+    for i in range(num_tags):
+        if sentence[0] in emission_prob_matrix[i]:
+            emission_prob = emission_prob_matrix[i][sentence[0]]
         else:
-            init_prob = (initial_freq[tag] / num_sentences)
-            emission_prob = emission_freq[tag].get_prob_of(sentence[0])
-            curr_prob = init_prob * emission_prob
-            initial_prob_sum += curr_prob
+            emission_prob = 0
+        curr_prob = initial_prob_matrix[i] * emission_prob
+        initial_prob_sum += curr_prob
 
-        prob[0].update({tag: curr_prob})
-        prev[0][tag] = None
+        prob[0].update({tags[i]: curr_prob})
+        prev[0][tags[i]] = None
 
     for tag in tags:
         if initial_prob_sum > 0:
@@ -148,16 +148,23 @@ def viterbi(
 
         max_prob_sum = 0
 
-        for tag in tags:
+        for i1 in range(num_tags):
 
+            tag = tags[i1]
             max_prob = 0
             max_prev_tag = tag
 
-            for prev_tag in tags:
+            if sentence[t] in emission_prob_matrix[i1]:
+                emission_prob = emission_prob_matrix[i1][sentence[t]]
+            else:
+                emission_prob = 0
+
+            for i2 in range(num_tags):
+
+                prev_tag = tags[i2]
                 prev_prob = prob[t - 1][prev_tag]
-                transition_prob = transition_freq[prev_tag].get_prob_of(tag)
-                emission_prob = emission_freq[tag].get_prob_of(sentence[t])
-                curr_prob = prev_prob * transition_prob * emission_prob
+
+                curr_prob = prev_prob * transition_prob_matrix[i2][i1] * emission_prob
 
                 if curr_prob >= max_prob:
                     max_prob = curr_prob
@@ -204,13 +211,50 @@ def tagify(sentence: List[str], tags: List[str]) -> List[str]:
     return [f"{sentence[i]} : {tags[i]}" for i in range(len(sentence))]
 
 
-def tag(
-    test_filename: str,
-    output_filename: str,
+def compute_probabilities(
+    tags: List[str],
     num_sentences: int,
     initial_freq: Dict[str, int],
     transition_freq: FreqDict,
-    emission_freq: FreqDict) -> None:
+    emission_freq: FreqDict) -> Tuple[List[float], List[List[float]], List[Dict[str, float]]]:
+
+    # Initial Probability
+    initial_prob_matrix: List[float] = [0] * len(tags)
+
+    for i, tag in enumerate(tags):
+        if tag not in initial_freq:
+            curr_prob = 0
+        else:
+            curr_prob = initial_freq[tag] / num_sentences
+        initial_prob_matrix[i] = curr_prob
+
+    # Transition Probability
+    transition_prob_matrix: List[List[float]] = [0] * len(tags)
+
+    for i1 in range(len(tags)):
+        transition_prob_matrix[i1] = []
+        for i2 in range(len(tags)):
+            transition_prob_matrix[i1].append(transition_freq[tags[i1]].get_prob_of(tags[i2]))
+
+    # Emission Probability
+    emission_prob: List[Dict[str, float]] = [0] * len(tags)
+
+    for i1 in range(len(tags)):
+        emission_prob[i1] = {}
+        for word in emission_freq[tags[i1]].frequencies:
+            emission_prob[i1].update({word: emission_freq[tags[i1]].get_prob_of(word)})
+
+    return initial_prob_matrix, transition_prob_matrix, emission_prob
+
+
+def tag(
+    test_filename: str,
+    output_filename: str,
+    tags: List[str],
+    num_sentences: int,
+    initial_prob_matrix: List[float],
+    transition_prob_matrix: List[List[float]],
+    emission_prob_matrix: List[Dict[str, float]]) -> None:
 
     input_file = open(test_filename)
     output_file = open(output_filename, "w")
@@ -229,10 +273,11 @@ def tag(
             # Call viterbi
             prob, prev = viterbi(
                 curr_sentence,
+                tags,
                 num_sentences,
-                initial_freq,
-                transition_freq,
-                emission_freq
+                initial_prob_matrix,
+                transition_prob_matrix,
+                emission_prob_matrix
             )
 
             # Follow path to get most likely tags
@@ -256,14 +301,26 @@ def main(training_files: List[str], test_filename: str, output_filename: str) ->
     # Count
     counter = Counter(training_files)
     num_sentences, initial_freq, transition_freq, emission_freq = counter.count()
+    tags = list(emission_freq.keys())
 
-    tag(
-        test_filename,
-        output_filename,
+    # Convert frequencies into probability matrices
+    initial_prob_matrix, transition_prob_matrix, emission_prob_matrix = compute_probabilities(
+        tags,
         num_sentences,
         initial_freq,
         transition_freq,
         emission_freq
+    )
+
+    # Tag
+    tag(
+        test_filename,
+        output_filename,
+        tags,
+        num_sentences,
+        initial_prob_matrix,
+        transition_prob_matrix,
+        emission_prob_matrix
     )
 
 
