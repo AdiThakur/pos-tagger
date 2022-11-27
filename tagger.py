@@ -135,13 +135,9 @@ def viterbi(
     initial_prob_sum = 0
 
     for i in range(num_tags):
-        if sentence[0] in emission_prob_matrix[i]:
-            emission_prob = emission_prob_matrix[i][sentence[0]]
-        else:
-            emission_prob = 0
+        emission_prob = emission_prob_matrix[i].get(sentence[0], 0)
         curr_prob = initial_prob_matrix[i] * emission_prob
         initial_prob_sum += curr_prob
-
         prob[0][i] = curr_prob
 
     for i in range(num_tags):
@@ -154,20 +150,13 @@ def viterbi(
 
         for i1 in range(num_tags):
 
-            tag = tags[i1]
             max_prob = 0
             max_prev_tag_index = i1
-
-            if sentence[t] in emission_prob_matrix[i1]:
-                emission_prob = emission_prob_matrix[i1][sentence[t]]
-            else:
-                emission_prob = 0
+            emission_prob = emission_prob_matrix[i1].get(sentence[t], 0)
 
             for i2 in range(num_tags):
 
-                prev_tag = tags[i2]
                 prev_prob = prob[t - 1][i2]
-
                 curr_prob = prev_prob * transition_prob_matrix[i2][i1] * emission_prob
 
                 if curr_prob >= max_prob:
