@@ -80,6 +80,10 @@ class Counter:
         word1, tag1 = Parser.parse_line(line1)
         word2, tag2 = None, None
 
+        if "-" in tag1:
+            split_tags = tag1.split("-")
+            tag1 = "-".join(sorted(split_tags))
+
         if line2:
             word2, tag2 = Parser.parse_line(line2)
             self._count_transition(tag1, tag2)

@@ -107,7 +107,7 @@ suit : VVI
 him : PNP
 , : PUN
 then : AV0
-progressed : VVN-VVD
+progressed : VVD-VVN
 to : PRP
 the : AT0
 baked : AJ0
@@ -162,7 +162,7 @@ He : PNP
 lifted : VVD
 a : AT0
 hand : NN1
-off : PRP-AVP
+off : AVP-PRP
 his : DPS
 cup : NN1
 in : PRP
