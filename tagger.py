@@ -251,6 +251,24 @@ def compute_probabilities(
     return initial_prob_matrix, transition_prob_matrix, emission_prob
 
 
+def generate_probability_matrices(
+    training_files: List[str]) -> Tuple[int, List[str], List[float], List[List[float]], List[Dict[str, float]]]:
+
+    counter = Counter(training_files)
+    num_sentences, initial_freq, transition_freq, emission_freq = counter.count()
+    tags = list(emission_freq.keys())
+
+    initial_prob_matrix, transition_prob_matrix, emission_prob_matrix = compute_probabilities(
+        tags,
+        num_sentences,
+        initial_freq,
+        transition_freq,
+        emission_freq
+    )
+
+    return num_sentences, tags, initial_prob_matrix, transition_prob_matrix, emission_prob_matrix
+
+
 def tag(
     test_filename: str,
     output_filename: str,
@@ -302,29 +320,17 @@ def tag(
 
 
 def main(training_files: List[str], test_filename: str, output_filename: str) -> None:
-    # Count
-    counter = Counter(training_files)
-    num_sentences, initial_freq, transition_freq, emission_freq = counter.count()
-    tags = list(emission_freq.keys())
 
-    # Convert frequencies into probability matrices
-    initial_prob_matrix, transition_prob_matrix, emission_prob_matrix = compute_probabilities(
-        tags,
-        num_sentences,
-        initial_freq,
-        transition_freq,
-        emission_freq
-    )
+    num_sentences, tags, initial_prob, transition_prob, emission_prob = generate_probability_matrices(training_files)
 
-    # Tag
     tag(
         test_filename,
         output_filename,
         tags,
         num_sentences,
-        initial_prob_matrix,
-        transition_prob_matrix,
-        emission_prob_matrix
+        initial_prob,
+        transition_prob,
+        emission_prob
     )
 
 
