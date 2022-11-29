@@ -29,8 +29,8 @@ class Frequency:
 
 class Parser:
     def parse_line(line: List[str]) -> Tuple[str, str]:
-        line = line.split(":")
-        word, tag = line[0].strip(), line[1].strip()
+        line = line.split()
+        word, tag = line[0].strip(), line[2].strip()
         return word, tag
 
     def is_sentence_end(word: str) -> bool:
