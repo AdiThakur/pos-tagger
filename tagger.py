@@ -120,6 +120,8 @@ def viterbi(
     transition_prob_matrix: List[List[float]],
     emission_prob_matrix: List[Dict[str, float]]) -> Tuple[List[List[int]], List[List[int]]]:
 
+    delta = 0.000_000_000_1
+
     num_tags = len(tags)
     prob: List[List[int]] = []
     prev: List[List[int]] = []
@@ -131,8 +133,9 @@ def viterbi(
     initial_prob_sum = 0
 
     for i in range(num_tags):
-        emission_prob = emission_prob_matrix[i].get(sentence[0], 0)
-        curr_prob = initial_prob_matrix[i] * emission_prob
+        initial_prob = max(initial_prob_matrix[i], delta)
+        emission_prob = max(emission_prob_matrix[i].get(sentence[0], 0), delta)
+        curr_prob = initial_prob * emission_prob
         initial_prob_sum += curr_prob
         prob[0][i] = curr_prob
 
@@ -148,12 +151,15 @@ def viterbi(
 
             max_prob = 0
             max_prev_tag_index = i1
-            emission_prob = emission_prob_matrix[i1].get(sentence[t], 0)
+            emission_prob = max(
+                emission_prob_matrix[i1].get(sentence[t], 0),
+                delta
+            )
 
             for i2 in range(num_tags):
 
                 prev_prob = prob[t - 1][i2]
-                curr_prob = prev_prob * transition_prob_matrix[i2][i1] * emission_prob
+                curr_prob = (prev_prob * transition_prob_matrix[i2][i1] * emission_prob)
 
                 if curr_prob >= max_prob:
                     max_prob = curr_prob
