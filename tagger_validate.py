@@ -1,29 +1,30 @@
-"""This file contains the validation program for CSC384 Assignment 4.
-The validation assumes that the following files are in the same directory as the tagger_validate.py file:
-  - training1.txt  --> file of tagged words used to train the HMM tagger
-  - test1.txt      --> file of untagged words to be tagged by the HMM
-  - solution1.txt  --> file with correct tags for autotest words
-This auto grader generates a file called results.txt that records the test results.
-"""
 import os
+import time
+from typing import *
 
-if __name__ == '__main__':
-    # Invoke the shell command to train and test the HMM tagger
-    print("Training on training1.txt, running tests on test1.txt. "
-          "Output --> output1.txt")
-    os.system("python tagger.py -d data/training1.txt -t validation/test1.txt -o output1.txt")
 
-    # Compare the contents of the HMM tagger output with the reference solution.
-    # Store the missed cases and overall stats in results.txt
-    with open("output1.txt", "r") as output_file, \
-            open("validation/solution1.txt", "r") as solution_file, \
-            open("results.txt", "w") as results_file:
-        # Each word is on a separate line in each file.
+def determine_accuracy(run_id: int, training_file_id: int, test_file_id: int) -> None:
+
+    training_filename = f"data/training{training_file_id}.txt"
+    test_filename = f"data/test{test_file_id}.txt"
+    solution_filename = f"data/training{test_file_id}.txt"
+    tagger_output_filename = f"output_{run_id}.txt"
+    results_filename = f"results_{run_id}.txt"
+
+    print(f"Training File: {training_filename} Test File: {test_filename}\n")
+
+    start_time = time.time()
+    os.system(f"python tagger.py -d {training_filename} -t {test_filename} -o {tagger_output_filename}")
+    delta = time.time() - start_time
+
+    with open(tagger_output_filename, "r") as output_file, \
+            open(solution_filename, "r") as solution_file, \
+            open(results_filename, "w") as results_file:
+
         output = output_file.readlines()
         solution = solution_file.readlines()
         total_matches = 0
 
-        # generate the report
         for index in range(len(output)):
             if output[index] != solution[index]:
                 results_file.write(f"Line {index + 1}: "
@@ -33,5 +34,20 @@ if __name__ == '__main__':
                 total_matches = total_matches + 1
 
         # Add stats at the end of the results file.
+        results_file.write(f"Time: {delta} seconds.\n")
         results_file.write(f"Total words seen: {len(output)}.\n")
         results_file.write(f"Total matches: {total_matches}.\n")
+        results_file.write(f"\tAccuracy: {(total_matches / len(output)) * 100}.\n")
+
+        print(f"\tTime: {delta} seconds.\n")
+        print(f"\tTotal words seen: {len(output)}.\n")
+        print(f"\tTotal matches: {total_matches}.\n")
+        print(f"\tAccuracy: {(total_matches / len(output)) * 100}.\n")
+
+
+if __name__ == '__main__':
+    run_id = 1
+    for training_file_id in range(1, 6):
+        for test_file_id in range(1, 6):
+            determine_accuracy(run_id, training_file_id, test_file_id)
+            run_id += 1
