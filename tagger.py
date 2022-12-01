@@ -329,10 +329,3 @@ if __name__ == '__main__':
     test_file = parameters[parameters.index("-t") + 1]
     output_file = parameters[parameters.index("-o") + 1]
     main(training_list, test_file, output_file)
-
-
-# Possible speedups?
-# 1. Pre-compute all transition and emission probabilities; instead of computing
-#    them every time, we can just do a simple lookup
-# 2. In follow path, either use two stacks, or create a fixed size list and index
-#    into it rather than constantly insert to the front
